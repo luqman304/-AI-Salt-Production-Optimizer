@@ -12,16 +12,36 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 
+# ---------- Streamlit page config ----------
 st.set_page_config(page_title="AI-Salt-Production-Optimizer", page_icon=":factory:", layout="wide")
 
+# ---------- Compatibility helpers ----------
+def show_image(img, caption=None):
+    """Display image across Streamlit versions (use_container_width vs use_column_width)."""
+    try:
+        st.image(img, caption=caption, use_container_width=True)
+    except TypeError:
+        st.image(img, caption=caption, use_column_width=True)
+
+def card(title, body=""):
+    st.markdown(
+        """
+<div style="padding:16px;border:1px solid #1f2937;border-radius:14px;background:#111827">
+  <div style="font-weight:600;margin-bottom:6px">""" + title + """</div>
+  <div>""" + body + """</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+# ---------- Header ----------
 st.markdown("# AI-Salt-Production-Optimizer")
 st.caption("Core Four: Predictive Maintenance • Energy • CV Quality • Logistics • ROI")
 
-# Sidebar
+# ---------- Sidebar ----------
 with st.sidebar:
-    # Optional image; keep or remove if not present
     if os.path.exists("process_flow.png"):
-        st.image("process_flow.png", caption="Core Four pipeline", use_container_width=True)
+        show_image("process_flow.png", caption="Core Four pipeline")
 
     st.markdown("""
 **NASCON FY2024 (public filings):**
@@ -39,23 +59,14 @@ Sources: NGX audited results & FY2024 investor materials.
             "Energy Optimization",
             "Quality Control (CV)",
             "Logistics Optimization",
-            "ROI Calculator"
-        ]
+            "ROI Calculator",
+        ],
     )
     use_bench = st.checkbox("Use NASCON FY2024 benchmarks in ROI tab", True)
 
-def card(title, body=""):
-    st.markdown(
-        """
-<div style="padding:16px;border:1px solid #1f2937;border-radius:14px;background:#111827">
-  <div style="font-weight:600;margin-bottom:6px">""" + title + """</div>
-  <div>""" + body + """</div>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-
-# ---------- Predictive Maintenance ----------
+# ======================================================================
+# Predictive Maintenance
+# ======================================================================
 if section == "Predictive Maintenance":
     st.subheader("Predictive Maintenance — Failure Risk (Demo)")
 
@@ -97,7 +108,9 @@ if section == "Predictive Maintenance":
     with st.expander("How it works"):
         st.write("RandomForest on synthetic features (temperature, vibration, run hours) predicts 7-day failure risk. Replace with historian/PLC data in production.")
 
-# ---------- Energy Optimization ----------
+# ======================================================================
+# Energy Optimization
+# ======================================================================
 elif section == "Energy Optimization":
     st.subheader("Energy Optimization — Usage & Baseline Forecast")
 
@@ -127,7 +140,9 @@ elif section == "Energy Optimization":
     with st.expander("How it works"):
         st.write("Lightweight moving average forecast as a baseline. Replace with Prophet/SARIMAX/LSTM for production scheduling.")
 
-# ---------- Quality Control (CV) ----------
+# ======================================================================
+# Quality Control (CV)
+# ======================================================================
 elif section == "Quality Control (CV)":
     st.subheader("Computer Vision QC — Heuristic Defect Score (Demo)")
     st.caption("Upload an image or use the samples below. Heuristic uses dark specks + yellow tint.")
@@ -145,7 +160,7 @@ elif section == "Quality Control (CV)":
         for i, p in enumerate(samples):
             with cols[i]:
                 if os.path.exists(p):
-                    st.image(p, caption=os.path.basename(p), use_container_width=True)
+                    show_image(p, caption=os.path.basename(p))
     else:
         img = Image.open(up).convert("RGB")
         arr = np.asarray(img).astype(np.float32)
@@ -153,7 +168,7 @@ elif section == "Quality Control (CV)":
         yellow = ((arr[:, :, 0] + arr[:, :, 1]) / 2 - arr[:, :, 2] > 25).mean()
         score = 0.6 * dark + 0.4 * yellow
         label = "DEFECT" if score > 0.08 else "GOOD"
-        st.image(img, caption=f"{label} (score={score:.3f})", use_container_width=True)
+        show_image(img, caption=f"{label} (score={score:.3f})")
 
     fig, ax = plt.subplots()
     ax.bar(["GOOD", "DEFECT"], [2, 2])
@@ -163,7 +178,9 @@ elif section == "Quality Control (CV)":
     with st.expander("How it works"):
         st.write("This demo uses a simple heuristic. Swap for a small CNN/YOLO model trained on labeled images for real QC.")
 
-# ---------- Logistics Optimization ----------
+# ======================================================================
+# Logistics Optimization
+# ======================================================================
 elif section == "Logistics Optimization":
     st.subheader("Logistics — Simple Packing Heuristic (Demo)")
 
@@ -208,7 +225,9 @@ elif section == "Logistics Optimization":
     with st.expander("How it works"):
         st.write("Greedy packing by available capacity. Replace with Google OR-Tools VRP for optimal routing in production.")
 
-# ---------- ROI Calculator ----------
+# ======================================================================
+# ROI Calculator
+# ======================================================================
 else:
     st.subheader("ROI Calculator — Core Four Savings (Demo)")
     st.caption("Toggle NASCON FY2024 benchmarks in the sidebar.")
