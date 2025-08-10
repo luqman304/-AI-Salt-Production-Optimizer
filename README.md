@@ -84,5 +84,4 @@ This project uses simulated datasets inspired by **NASCON FY2024** public result
 ---
 
 ## License
-
-This project is licensed under the MIT License.
+Copyright © 2025 Luqman Abdulwahab.
