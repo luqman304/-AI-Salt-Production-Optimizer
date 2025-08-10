@@ -187,6 +187,17 @@ elif section == "Logistics Optimization":
     ldf = pd.read_csv("sample_data/logistics.csv")
     st.dataframe(ldf.head(), use_container_width=True)
 
+    # --- If cost column is missing, synthesize one so charts don't break ---
+    if "cost_ngn" not in ldf.columns:
+        st.info("No 'cost_ngn' column found — estimating cost from distance × weight.")
+        rate = st.number_input("Rate (NGN per ton‑km)", value=350.0, step=10.0)
+        base_cost = st.number_input("Base cost per order (NGN)", value=50_000.0, step=5_000.0)
+        # If your CSV uses 'destination' instead of 'city', no problem; we don't rely on it here
+        if "weight_tons" not in ldf.columns:
+            st.error("Missing 'weight_tons' column in logistics.csv — add it or rename your weight column.")
+        else:
+            ldf["cost_ngn"] = base_cost + rate * ldf["distance_km"] * ldf["weight_tons"]
+
     trucks = st.slider("Available trucks", 3, 12, 6)
 
     ldf_sorted = ldf.sort_values("distance_km", ascending=False).reset_index(drop=True)
@@ -214,17 +225,20 @@ elif section == "Logistics Optimization":
     with c1:
         for i, (rt, ld) in enumerate(zip(routes, loads), start=1):
             card(f"Truck {i}", f"Load: <b>{ld:.1f} tons</b> • Orders: {', '.join(rt) if rt else '-'}")
+
     with c2:
-        fig, ax = plt.subplots()
-        ax.scatter(ldf["distance_km"], ldf["cost_ngn"])
-        ax.set_xlabel("Distance (km)")
-        ax.set_ylabel("Cost (NGN)")
-        ax.set_title("Distance vs Cost")
-        st.pyplot(fig)
+        if "cost_ngn" in ldf.columns:
+            fig, ax = plt.subplots()
+            ax.scatter(ldf["distance_km"], ldf["cost_ngn"])
+            ax.set_xlabel("Distance (km)")
+            ax.set_ylabel("Cost (NGN)")
+            ax.set_title("Distance vs Cost")
+            st.pyplot(fig)
+        else:
+            st.warning("Add a 'cost_ngn' column or use the estimator above to enable the distance vs cost chart.")
 
     with st.expander("How it works"):
-        st.write("Greedy packing by available capacity. Replace with Google OR-Tools VRP for optimal routing in production.")
-
+        st.write("Greedy packing by available capacity (40‑ton limit). For production, replace with Google OR‑Tools VRP for optimal routing.")
 # ======================================================================
 # ROI Calculator
 # ======================================================================
